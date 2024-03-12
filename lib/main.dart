@@ -1,4 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:pdf/widgets.dart' as pdfw;
 import 'package:pdfx/pdfx.dart';
 
 const String _documentPath = 'assets/pdfs/dummy.pdf';
@@ -42,6 +46,28 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void updatePosition(Offset newPosition) =>
       setState(() => position = newPosition);
+
+  Future<Uint8List> makePdf() async {
+    final img = await rootBundle.load(_imgPath);
+    final imageBytes = img.buffer.asUint8List();
+    final pdf = pdfw.Document();
+    pdf.addPage(pdfw.Page(build: (context) {
+      return pdfw.Stack(children: [
+        pdfw.Positioned(
+          left: position.dx,
+          top: position.dy,
+          child: pdfw.SizedBox(
+            height: 120.0,
+            width: 120.0,
+            child: pdfw.Center(
+              child: pdfw.Image(pdfw.MemoryImage(imageBytes)),
+            ),
+          ),
+        )
+      ]);
+    }));
+    return pdf.save();
+  }
 
   get qrcode => SizedBox(
         height: 120.0,
@@ -106,7 +132,9 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           const Padding(padding: EdgeInsets.all(10)),
           FloatingActionButton(
-            onPressed: () {},
+            onPressed: () async {
+              makePdf();
+            },
             tooltip: 'Save',
             child: const Icon(Icons.save),
           ),
